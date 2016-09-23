@@ -26,6 +26,10 @@ static struct kobj_attribute _name##_attr = __ATTR_RO(_name)
 static struct kobj_attribute _name##_attr = \
 	__ATTR(_name, 0644, _name##_show, _name##_store)
 
+#define KERNEL_ATTR_READ_ONLY(_name) \
+static struct kobj_attribute _name##_attr = \
+	__ATTR(_name, 0444, _name##_show, _name##_store)
+
 #if defined(CONFIG_HOTPLUG)
 /* current uevent sequence number */
 static ssize_t uevent_seqnum_show(struct kobject *kobj,
@@ -209,6 +213,7 @@ static struct attribute_group kernel_attr_group = {
 
 
 static unsigned int Lgentle_fair_sleepers = 0;
+static unsigned int Larch_power = 0;
 extern void relay_gfs(unsigned int gfs);
 
 static ssize_t gentle_fair_sleepers_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
@@ -228,17 +233,35 @@ static ssize_t gentle_fair_sleepers_store(struct kobject *kobj, struct kobj_attr
 	relay_gfs(Lgentle_fair_sleepers);
 	return count;
 }
+KERNEL_ATTR_READ_ONLY(gentle_fair_sleepers);
 
-static struct kobj_attribute gentle_fair_sleepers_attribute =
-__ATTR(gentle_fair_sleepers, 0666, gentle_fair_sleepers_show, gentle_fair_sleepers_store);
+static ssize_t arch_power_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", Larch_power);
+}
 
-static struct attribute *gentle_fair_sleepers_attrs[] = {
-&gentle_fair_sleepers_attribute.attr,
-NULL,
+static ssize_t arch_power_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
+	if (input != 0 && input != 1)
+		input = 0;
+	
+	Larch_power = input;
+	relay_ap(Larch_power);
+	return count;
+}
+KERNEL_ATTR_READ_ONLY(arch_power);
+
+static struct attribute * sched_features_attrs[] = {
+	&gentle_fair_sleepers_attr.attr,
+	&arch_power_attr.attr,
+	NULL
 };
 
-static struct attribute_group gentle_fair_sleepers_attr_group = {
-.attrs = gentle_fair_sleepers_attrs,
+static struct attribute_group sched_features_attr_group = {
+.attrs = sched_features_attrs,
 };
 
 /* Initialize fast charge sysfs folder */
