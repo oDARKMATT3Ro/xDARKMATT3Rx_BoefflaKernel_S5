@@ -990,6 +990,7 @@ CONFIG_CMDLINE=""
 #
 # CPU Power Management
 #
+CONFIG_POWERSUSPEND=y
 
 #
 # CPU Frequency scaling
